@@ -1,12 +1,12 @@
 //=================================================================
-// - Image utility object that allows you to load, edit and save* 
+// - Image utility object that allows you to load, edit and save
 //   raw image data
 //=================================================================
 
 #pragma once
 #include <cstdlib>
 
-namespace rpm {
+namespace Rpm {
 
 enum class ImageSpec {
 	WIDTH,
@@ -28,4 +28,4 @@ bool imageGetSpecification(const Image2D* image, ImageSpec spec, float& data);
 bool imageWritePixel(const Image2D* image, size_t handle, unsigned char value);
 unsigned char* imageGetData(const Image2D* image);
 
-} // namespace rpm
+} // NAMESPACE RPM

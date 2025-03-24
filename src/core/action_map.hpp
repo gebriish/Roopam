@@ -1,9 +1,8 @@
 #pragma once
-#include <string>
 #include <cstdint>
-#include "input.hpp"
+#include "input.hpp" // not needed, but included for ease of use
 
-namespace rpm {
+namespace Rpm {
 
 struct Action {
 	float value = 0.0f;
@@ -26,17 +25,17 @@ struct ActionBinding {
 	ActionType type;
 };
 
-void actionBindKey(const std::string& name, int key, float scale = 1.0f);
-void actionBindMouseButton(const std::string& name, int button, float scale = 1.0f);
-void actionBindMouseAxis(const std::string& name, bool x_axis, float dead_zone = 0.1f, float scale = 1.0f);
-void actionBindGamepadButton(const std::string& name, int button, int gamepad = 0, float scale = 1.0f);
-void actionBindGamepadAxis(const std::string& name, int axis, int gamepad = 0, float dead_zone = 0.0f, float scale = 1.0f);
+void actionBindKey(uint32_t name, int key, float scale = 1.0f);
+void actionBindMouseButton(uint32_t name, int button, float scale = 1.0f);
+void actionBindMouseAxis(uint32_t name, bool x_axis, float dead_zone = 0.1f, float scale = 1.0f);
+void actionBindGamepadButton(uint32_t name, int button, int gamepad = 0, float scale = 1.0f);
+void actionBindGamepadAxis(uint32_t name, int axis, int gamepad = 0, float dead_zone = 0.0f, float scale = 1.0f);
 
-bool actionPressed(const std::string& name);
-bool actionJustPressed(const std::string& name);
-bool actionJustReleased(const std::string& name);
-float actionGetValue(const std::string& name);
+bool actionPressed(uint32_t name);
+bool actionJustPressed(uint32_t name);
+bool actionJustReleased(uint32_t name);
+float actionGetValue(uint32_t name);
 
 void actionMapUpdate();
 
-} // namespace rpm
+} // NAMESPACE RPM
