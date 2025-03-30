@@ -12,4 +12,10 @@ void colorLoadHexcode(const char* hex, float array[4]) {
 	array[3] = 1.0f;
 }
 
+fColor fColor::fromHex(const char* hexcode) {
+	fColor result;
+	colorLoadHexcode(hexcode, result.rgba);
+	return result;
+}
+
 }

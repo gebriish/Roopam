@@ -22,8 +22,7 @@ void _check_compile_errors(unsigned int shader, std::string type)
 				<< infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
 		}
 	}
-	else
-{
+	else{
 		glGetProgramiv(shader, GL_LINK_STATUS, &success);
 		if (!success)
 		{
@@ -34,9 +33,8 @@ void _check_compile_errors(unsigned int shader, std::string type)
 	}
 }
 
-void shaderLoadGlslFromSource(Shader& shader, const char* vertexSource, const char* fragmentSource) {
-	unsigned int vertex, fragment;
-	// vertex shader
+void shaderLoadGlslFromSource(Shader& shader, const char* vertexSource, const char* fragmentSource, const char* geometrySource) {
+	unsigned int vertex, fragment, geometry;
 	vertex = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertex, 1, &vertexSource, 0L);
 	glCompileShader(vertex);
@@ -45,44 +43,65 @@ void shaderLoadGlslFromSource(Shader& shader, const char* vertexSource, const ch
 	glShaderSource(fragment, 1, &fragmentSource, 0L);
 	glCompileShader(fragment);
 	_check_compile_errors(fragment, "FRAGMENT");
+
 	shader.Id = glCreateProgram();
 	glAttachShader(shader.Id, vertex);
 	glAttachShader(shader.Id, fragment);
+
+	if(geometrySource != nullptr) {
+		geometry = glCreateShader(GL_GEOMETRY_SHADER);
+		glShaderSource(geometry, 1, &geometrySource, 0L);
+		glCompileShader(geometry);
+		_check_compile_errors(geometry, "GEOMETRY");
+		glAttachShader(shader.Id, geometry);
+	}
+
 	glLinkProgram(shader.Id);
 	_check_compile_errors(shader.Id, "PROGRAM");
 	glDeleteShader(vertex);
 	glDeleteShader(fragment);
+	glDeleteShader(geometry);
 }
 
-void shaderLoadGlsl(Shader& shader, const char* vertexPath, const char* fragmentPath) {
-	std::string vertexCode;
-	std::string fragmentCode;
-	std::ifstream vShaderFile;
-	std::ifstream fShaderFile;
+void shaderLoadGlsl(Shader& shader, const char* vertexPath, const char* fragmentPath, const char* geometryPath) {
+    std::ifstream vShaderFile, fShaderFile, gShaderFile;
+    std::stringstream vShaderStream, fShaderStream, gShaderStream;
+    
+    vShaderFile.open(vertexPath);
+    fShaderFile.open(fragmentPath);
+    
+    if (!vShaderFile.is_open() || !fShaderFile.is_open()) {
+        std::cerr << "Error: Could not open shader files!\n";
+        return;
+    }
 
-	vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-	fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-	try
-	{
-		vShaderFile.open(vertexPath);
-		fShaderFile.open(fragmentPath);
-		std::stringstream vShaderStream, fShaderStream;
-		vShaderStream << vShaderFile.rdbuf();
-		fShaderStream << fShaderFile.rdbuf();
-		vShaderFile.close();
-		fShaderFile.close();
-		vertexCode = vShaderStream.str();
-		fragmentCode = fShaderStream.str();
-	}
-	catch (std::ifstream::failure &e)
-	{
-		std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: " << e.what() << std::endl;
-	}
+    vShaderStream << vShaderFile.rdbuf();
+    fShaderStream << fShaderFile.rdbuf();
 
-	const char *vShaderCode = vertexCode.c_str();
-	const char *fShaderCode = fragmentCode.c_str();
+    vShaderFile.close();
+    fShaderFile.close();
 
-	shaderLoadGlslFromSource(shader, vShaderCode, fShaderCode);
+    std::string vertexCode = vShaderStream.str();
+    std::string fragmentCode = fShaderStream.str();
+    const char* vShaderCode = vertexCode.c_str();
+    const char* fShaderCode = fragmentCode.c_str();
+
+    std::string geometryCode;
+    const char* gShaderCode = nullptr;
+    
+    if (geometryPath) {
+        gShaderFile.open(geometryPath);
+        if (gShaderFile.is_open()) {
+            gShaderStream << gShaderFile.rdbuf();
+            gShaderFile.close();
+            geometryCode = gShaderStream.str();
+            gShaderCode = geometryCode.c_str();
+        } else {
+            std::cerr << "Error: Could not open geometry shader file!\n";
+        }
+    }
+
+    shaderLoadGlslFromSource(shader, vShaderCode, fShaderCode, gShaderCode);
 }
 
 void shaderUseProgram(const Shader& shader) {
@@ -90,7 +109,7 @@ void shaderUseProgram(const Shader& shader) {
 }
 
 void shaderDeleteProgram(const Shader& shader) {
-	glDeleteProgram(0);
+	glDeleteProgram(shader.Id);
 }
 
 void shaderUploadInt(const Shader& program, const char* name, int v) {

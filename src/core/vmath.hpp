@@ -2,16 +2,17 @@
 // A single header portable vector math library
 //=================================================================
 
-
 #pragma once
 #include <cmath>
 #include <cstring>
 
-constexpr float VMATH_PI         =  3.14159265358979323846f;  	  /* pi       */
-constexpr float VMATH_PI_2       =	1.57079632679489661923f;	  /* pi/2     */
-constexpr float VMATH_PI_4       =	0.78539816339744830962f;	  /* pi/4     */
-constexpr float VMATH_RAD_TO_DEG =  57.29577951308232f;           /* 180 / pi */
-constexpr float VMATH_DEG_TO_RAD =  0.017453292519943295f;        /* pi / 180 */
+namespace vmath {
+
+constexpr float PI         =  3.14159265358979323846f;  	  /* pi       */
+constexpr float PI_2       =	1.57079632679489661923f;	    /* pi/2     */
+constexpr float PI_4       =	0.78539816339744830962f;	    /* pi/4     */
+constexpr float RAD_TO_DEG =  57.29577951308232f;           /* 180 / pi */
+constexpr float DEG_TO_RAD =  0.017453292519943295f;        /* pi / 180 */
 
 //############################################################//
 //#                         vec2                             #//
@@ -511,4 +512,6 @@ inline vec3 operator*(const quat& q, const vec3& v) {
 	uv *= (2.0f * q.w);
 	uuv *= 2.0f;
 	return v + uv + uuv;
+}
+
 }

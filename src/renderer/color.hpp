@@ -8,6 +8,8 @@ struct fColor {
 		struct {float r, g, b, a;};
 		float rgba[4];
 	};
+
+	static fColor fromHex(const char* hex);
 };
 
 struct uColor {
