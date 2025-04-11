@@ -3,18 +3,15 @@
 
 namespace Rpm {
 
-void colorLoadHexcode(const char* hex, float array[4]) {
-	uint32_t r, g, b;
-	sscanf(hex, "%02x%02x%02x", &r, &g, &b);
-	array[0] = r / 255.0f;
-	array[1] = g / 255.0f;
-	array[2] = b / 255.0f;
-	array[3] = 1.0f;
-}
 
 fColor fColor::fromHex(const char* hexcode) {
 	fColor result;
-	colorLoadHexcode(hexcode, result.rgba);
+	uint32_t r, g, b;
+	sscanf(hexcode, "%02x%02x%02x", &r, &g, &b);
+	result.rgba[0] = r / 255.0f;
+	result.rgba[1] = g / 255.0f;
+	result.rgba[2] = b / 255.0f;
+	result.rgba[3] = 1.0f;
 	return result;
 }
 

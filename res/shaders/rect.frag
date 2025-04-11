@@ -1,9 +1,11 @@
 #version 410 core
 
-uniform vec3 uFillColor;
+uniform vec4 uFillColor;
+uniform vec4 uOutlineColor;
 uniform vec2 uMinPos;
 uniform vec2 uMaxPos;
 uniform float uRadius;
+uniform float uOutlineThickness;
 
 in struct {
 	vec2 position;
@@ -17,9 +19,17 @@ float sdfBox(vec2 position, vec2 halfSize, float cornerRadius) {
 }
 
 void main() {
-	vec2 pos = vsOut.position - (uMinPos + uMaxPos) * 0.5;
-	float sdfDist = sdfBox(pos, (uMaxPos - uMinPos) * 0.5, uRadius);
-	float mask = smoothstep(0, -1, sdfDist);
+	vec2 rectCenter = (uMaxPos + uMinPos) * 0.5;
+	vec2 halfSize = (uMaxPos - uMinPos) * 0.5;
+	vec2 pos = vsOut.position - rectCenter;
+	float sdfDist = sdfBox(pos, halfSize, uRadius);
+	float mask = smoothstep(.5, -.5, sdfDist);
 
-	FragColor = vec4(uFillColor, mask); 
+	vec4 col = uFillColor;
+	if(uOutlineThickness > 0.5f) {
+		float outlineMask = 1.0 - smoothstep(.5 - uOutlineThickness, -.5 - uOutlineThickness, sdfDist);
+		col = mix(uFillColor, uOutlineColor, outlineMask);
+	}
+
+	FragColor = vec4(col.rgb,col.a * mask); 
 }

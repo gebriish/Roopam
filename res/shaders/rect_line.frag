@@ -1,6 +1,8 @@
 #version 410 core
 uniform float uThickness;
-uniform vec3 uFillColor;
+uniform float uOutlineThickness;
+uniform vec4 uFillColor;
+uniform vec4 uOutlineColor;
 uniform vec2 uBeginPos;
 uniform vec2 uEndPos;
 
@@ -24,7 +26,15 @@ void main() {
 	float l = length(uBeginPos - uEndPos);
 
 	float d = sdfLine(vsOut.position, uBeginPos, uEndPos);
-	float mask = smoothstep(halfThickness, halfThickness-1, d);
+	float mask = smoothstep(halfThickness + .5, halfThickness - .5, d);
+	
+	vec4 col = uFillColor;
 
-	FragColor = vec4(uFillColor, mask);
+	if (uOutlineThickness > 0.5) {
+		float radiusToOutline = halfThickness - uOutlineThickness;
+		float outlineMask = 1.0 - smoothstep(radiusToOutline + 0.5, radiusToOutline - .5, d);
+		col = mix(col, uOutlineColor, outlineMask);
+	}
+
+	FragColor = vec4(col.rgb, col.a * mask);
 }

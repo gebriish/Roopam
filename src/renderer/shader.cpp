@@ -33,8 +33,8 @@ void _check_compile_errors(unsigned int shader, std::string type)
 	}
 }
 
-void shaderLoadGlslFromSource(Shader& shader, const char* vertexSource, const char* fragmentSource, const char* geometrySource) {
-	unsigned int vertex, fragment, geometry;
+void shaderLoadFromSource(Shader& shader, const char* vertexSource, const char* fragmentSource, const char* geometrySource) {
+	unsigned int vertex = 0, fragment = 0, geometry = 0;
 	vertex = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertex, 1, &vertexSource, 0L);
 	glCompileShader(vertex);
@@ -60,48 +60,48 @@ void shaderLoadGlslFromSource(Shader& shader, const char* vertexSource, const ch
 	_check_compile_errors(shader.Id, "PROGRAM");
 	glDeleteShader(vertex);
 	glDeleteShader(fragment);
-	glDeleteShader(geometry);
+	if(geometry) glDeleteShader(geometry);
 }
 
-void shaderLoadGlsl(Shader& shader, const char* vertexPath, const char* fragmentPath, const char* geometryPath) {
-    std::ifstream vShaderFile, fShaderFile, gShaderFile;
-    std::stringstream vShaderStream, fShaderStream, gShaderStream;
-    
-    vShaderFile.open(vertexPath);
-    fShaderFile.open(fragmentPath);
-    
-    if (!vShaderFile.is_open() || !fShaderFile.is_open()) {
-        std::cerr << "Error: Could not open shader files!\n";
-        return;
-    }
+void shaderLoad(Shader& shader, const char* vertexPath, const char* fragmentPath, const char* geometryPath) {
+	std::ifstream vShaderFile, fShaderFile, gShaderFile;
+	std::stringstream vShaderStream, fShaderStream, gShaderStream;
 
-    vShaderStream << vShaderFile.rdbuf();
-    fShaderStream << fShaderFile.rdbuf();
+	vShaderFile.open(vertexPath);
+	fShaderFile.open(fragmentPath);
 
-    vShaderFile.close();
-    fShaderFile.close();
+	if (!vShaderFile.is_open() || !fShaderFile.is_open()) {
+		std::cerr << "Error: Could not open shader files!\n";
+		return;
+	}
 
-    std::string vertexCode = vShaderStream.str();
-    std::string fragmentCode = fShaderStream.str();
-    const char* vShaderCode = vertexCode.c_str();
-    const char* fShaderCode = fragmentCode.c_str();
+	vShaderStream << vShaderFile.rdbuf();
+	fShaderStream << fShaderFile.rdbuf();
 
-    std::string geometryCode;
-    const char* gShaderCode = nullptr;
-    
-    if (geometryPath) {
-        gShaderFile.open(geometryPath);
-        if (gShaderFile.is_open()) {
-            gShaderStream << gShaderFile.rdbuf();
-            gShaderFile.close();
-            geometryCode = gShaderStream.str();
-            gShaderCode = geometryCode.c_str();
-        } else {
-            std::cerr << "Error: Could not open geometry shader file!\n";
-        }
-    }
+	vShaderFile.close();
+	fShaderFile.close();
 
-    shaderLoadGlslFromSource(shader, vShaderCode, fShaderCode, gShaderCode);
+	std::string vertexCode = vShaderStream.str();
+	std::string fragmentCode = fShaderStream.str();
+	const char* vShaderCode = vertexCode.c_str();
+	const char* fShaderCode = fragmentCode.c_str();
+
+	std::string geometryCode;
+	const char* gShaderCode = nullptr;
+
+	if (geometryPath) {
+		gShaderFile.open(geometryPath);
+		if (gShaderFile.is_open()) {
+			gShaderStream << gShaderFile.rdbuf();
+			gShaderFile.close();
+			geometryCode = gShaderStream.str();
+			gShaderCode = geometryCode.c_str();
+		} else {
+			std::cerr << "Error: Could not open geometry shader file!\n";
+		}
+	}
+
+	shaderLoadFromSource(shader, vShaderCode, fShaderCode, gShaderCode);
 }
 
 void shaderUseProgram(const Shader& shader) {

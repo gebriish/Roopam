@@ -19,6 +19,4 @@ struct uColor {
 	};
 };
 
-void colorLoadHexcode(const char* hex, float array[4]);
-
 }

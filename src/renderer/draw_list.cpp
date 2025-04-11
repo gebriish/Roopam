@@ -19,6 +19,17 @@ void DrawList::addRect(const RectData& data) {
 	mDrawCommands.push_back(command);
 }
 
+void DrawList::addCircle(const CircleData& data) {
+	RectData rectData;
+	rectData.begin = data.center - data.radius;
+	rectData.end = data.center + data.radius;
+	rectData.fillColor = data.fillColor;
+	rectData.outlineThickness = data.outlineThickness;
+	rectData.outlineColor = data.outlineColor;
+	rectData.cornerRadius = data.radius;
+	this->addRect(rectData);
+}
+
 void DrawList::flush() {
 	mDrawCommands.clear();
 }

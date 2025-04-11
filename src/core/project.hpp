@@ -24,6 +24,7 @@ public:
 protected:
 	virtual void onUpdate(float dt) = 0;
 	virtual void onCommand(const std::string& command) = 0;
+	virtual void onAppEvent(const Rpm::Event& event) {}
 
 	void play(LoopFunction func);
 

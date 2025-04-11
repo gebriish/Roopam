@@ -8,7 +8,7 @@
 #include <GLFW/glfw3.h>
 #include <renderer/renderer.hpp>
 #include <renderer/shader.hpp>
-#include <core/vmath.hpp>
+#include <utils/vmath.hpp>
 
 namespace Rpm {
 
@@ -44,16 +44,17 @@ void ProjectBase::start()
 		while (windowGetEvent(e)) {
 			switch (e.type) {
 				case EVENT_QUIT:
-					mRunning = false;
-					break;
+				mRunning = false;
+				break;
 				case EVENT_RESIZE : {
 					auto& data = e.resize_data;
 					renderSetViewport(data.width, data.height);
 					break;
 				}
 				default:
-					break;
+				break;
 			}
+			this->onAppEvent(e);
 		}
 
 		//=============================================================

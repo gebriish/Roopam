@@ -1,23 +1,24 @@
 #include <cstdio>
 #include <core/project.hpp>
+#include <core/action_map.hpp>
 #include <core/input.hpp>
 #include <renderer/renderer.hpp>
 #include <renderer/color.hpp>
-#include <renderer/shader.hpp>
-#include <core/vmath.hpp>
+
+#define MOUSE_0 0
 
 class MyProject : public Rpm::ProjectBase 
 {
 	bool firstFrame = true;
+
 public:
 
 	MyProject()
-	: Rpm::ProjectBase(640, 480)
+	: Rpm::ProjectBase(1000, 625)
 	{
 	}
 
 private:
-
 	void init() {
 		Rpm::renderMainDrawList().reserve(1024);
 	}
@@ -28,17 +29,19 @@ private:
 			firstFrame = false;
 		}
 
-		float x, y;
+		float x, y; 
 		Rpm::inputGetCursorPosition(x, y);
-	
+
 		Rpm::DrawList& drawlist = Rpm::renderMainDrawList();
-		drawlist.addRect(Rpm::RectData { {10, 10}, {x,y} , Rpm::fColor::fromHex("fabd2f"), 10 });
-		drawlist.addRect(Rpm::RectData { {x,y}, {630,470} , Rpm::fColor::fromHex("b16286"), 10 });
-		drawlist.addLine(Rpm::LineData { {600, 400} ,{x, y}, {1, 1, 1, 1}, 10} );
+		Rpm::LineData line = Rpm::LineData{.begin = vec2(20), .end = vec2(x, y), .thickness = 10};
+		line.fillColor = Rpm::fColor::fromHex("131313");
+		line.outlineColor = Rpm::fColor::fromHex("ebdbc7");
+		line.outlineThickness = 1;
+		drawlist.addLine(line);
 
-		Rpm::renderClearViewport(Rpm::fColor::fromHex("000000").rgba);
-
+		Rpm::renderClearViewport(Rpm::fColor::fromHex("131313").rgba);
 		Rpm::renderDrawAll();
+
 		Rpm::renderFlushData();
 	}
 

@@ -8,8 +8,8 @@ struct Shader {
 
 constexpr Shader INVALID_SHADER = Shader { 0 };
 
-void shaderLoadGlslFromSource(Shader& shader, const char* vertexSource, const char* fragmentSource, const char* geometrySource	= nullptr);
-void shaderLoadGlsl(Shader& shader, const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr);
+void shaderLoadFromSource(Shader& shader, const char* vertexSource, const char* fragmentSource, const char* geometrySource	= nullptr);
+void shaderLoad(Shader& shader, const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr);
 
 void shaderUseProgram(const Shader& shader);
 void shaderDeleteProgram(const Shader& shader);

@@ -1,9 +1,9 @@
 #include "renderer.hpp"
-#include "../core/vmath.hpp"
+#include "../utils/vmath.hpp"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <cstdio>
+#include <iostream>
 
 #include "shader.hpp"
 
@@ -21,13 +21,14 @@ static struct {
 	Shader rectShader;
 	Shader lineShader;
 
+	unsigned int currentBoundShader = INVALID_SHADER.Id;
+	struct { int x = -1, y = -1; } renderResolution;
+
 	bool initialized;
-
-
 } g_RenderState;
 
 inline static void _draw_rect(const RectData& data) {
-	float vertices[] = {
+	const float vertices[] = {
 		data.begin.x, data.begin.y,
 		data.begin.x, data.end.y,
 		data.end.x,   data.begin.y,
@@ -38,9 +39,14 @@ inline static void _draw_rect(const RectData& data) {
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	shaderUseProgram(g_RenderState.rectShader);
-	shaderUploadFloat(g_RenderState.rectShader, "uRadius", data.cornderRadius);
-	shaderUploadFloat3(g_RenderState.rectShader, "uFillColor", data.fillColor.r, data.fillColor.g, data.fillColor.b);
+	if(g_RenderState.currentBoundShader != g_RenderState.rectShader.Id) {
+		shaderUseProgram(g_RenderState.rectShader);
+		g_RenderState.currentBoundShader = g_RenderState.rectShader.Id;
+	}
+	shaderUploadFloat(g_RenderState.rectShader, "uRadius", data.cornerRadius);
+	shaderUploadFloat(g_RenderState.rectShader, "uOutlineThickness", data.outlineThickness);
+	shaderUploadFloat4(g_RenderState.rectShader, "uFillColor", data.fillColor.r, data.fillColor.g, data.fillColor.b, data.fillColor.a);
+	shaderUploadFloat4(g_RenderState.rectShader, "uOutlineColor", data.outlineColor.r, data.outlineColor.g, data.outlineColor.b, data.outlineColor.a);
 	shaderUploadFloat2(g_RenderState.rectShader, "uMinPos", data.begin.x, data.begin.y);
 	shaderUploadFloat2(g_RenderState.rectShader, "uMaxPos", data.end.x, data.end.y);
 	
@@ -50,7 +56,8 @@ inline static void _draw_rect(const RectData& data) {
 }
 
 inline static void _draw_line(const LineData& data) {
-	float vertices[] = {
+	// For now, lines are drawn with the same mesh as the rect
+	constexpr static float vertices[] = {
 		-1, -1,
 		-1,  1,
 		 1, -1,
@@ -61,9 +68,14 @@ inline static void _draw_line(const LineData& data) {
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	shaderUseProgram(g_RenderState.lineShader);
+	if(g_RenderState.currentBoundShader != g_RenderState.lineShader.Id) {
+		shaderUseProgram(g_RenderState.lineShader);
+		g_RenderState.currentBoundShader = g_RenderState.lineShader.Id;
+	}
 	shaderUploadFloat(g_RenderState.lineShader, "uThickness", data.thickness);
-	shaderUploadFloat3(g_RenderState.lineShader, "uFillColor", data.fillColor.r, data.fillColor.g, data.fillColor.b);
+	shaderUploadFloat(g_RenderState.lineShader, "uOutlineThickness", data.outlineThickness);
+	shaderUploadFloat4(g_RenderState.lineShader, "uFillColor", data.fillColor.r, data.fillColor.g, data.fillColor.b, data.fillColor.a);
+	shaderUploadFloat4(g_RenderState.lineShader, "uOutlineColor", data.outlineColor.r, data.outlineColor.g, data.outlineColor.b, data.outlineColor.a);
 	shaderUploadFloat2(g_RenderState.lineShader, "uBeginPos", data.begin.x, data.begin.y);
 	shaderUploadFloat2(g_RenderState.lineShader, "uEndPos", data.end.x, data.end.y);
 
@@ -71,17 +83,17 @@ inline static void _draw_line(const LineData& data) {
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
+
 void renderInit() {
 	if(g_RenderState.initialized) {
-		printf("Renderer already initialized!");
+		std::cerr << "Renderer already initialized!\n";
 		return;
 	}
 
 	if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-		printf("Failed to load OpenGL\n");
+		std::cerr << "Failed to load OpenGL\n";
 		return;
 	}
-
 	
 	// Rect Mesh Initialization
 	{
@@ -100,13 +112,14 @@ void renderInit() {
 		glBindVertexArray(0);
 	}
 
-	shaderLoadGlsl(g_RenderState.rectShader, "res/shaders/rect.vert", "res/shaders/rect.frag");
-	shaderLoadGlsl(g_RenderState.lineShader, "res/shaders/rect_line.vert", "res/shaders/rect_line.frag");
+	
+	shaderLoad(g_RenderState.rectShader, "res/shaders/rect.vert", "res/shaders/rect.frag");
+	shaderLoad(g_RenderState.lineShader, "res/shaders/rect_line.vert", "res/shaders/rect_line.frag");
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	g_RenderState.initialized= true;
+	g_RenderState.initialized = true;
 }
 
 void renderCleanup() {
@@ -120,6 +133,8 @@ void renderCleanup() {
 		glDeleteBuffers(1, &g_RenderState.rectVBO);
 	}
 
+	g_RenderState.currentBoundShader = INVALID_SHADER.Id;
+
 	shaderDeleteProgram(g_RenderState.rectShader);
 	shaderDeleteProgram(g_RenderState.lineShader);
 
@@ -127,14 +142,22 @@ void renderCleanup() {
 }
 
 void renderSetViewport(int width, int height) {
+	if(width == g_RenderState.renderResolution.x && height == g_RenderState.renderResolution.y)
+		return;
+	
 	glViewport(0, 0, width, height);
 
-	const vmath::mat4 proj = vmath::mat4::orthographic(0, width, height, 0, -100, 100);
+	const mat4 proj = mat4::orthographic(0, width, height, 0, -100, 100);
 
 	shaderUseProgram(g_RenderState.rectShader);
 	shaderUploadMat4(g_RenderState.rectShader, "uProj", proj.elements);
 	shaderUseProgram(g_RenderState.lineShader);
 	shaderUploadMat4(g_RenderState.lineShader, "uProj", proj.elements);
+
+	shaderUseProgram(INVALID_SHADER);
+	g_RenderState.currentBoundShader = INVALID_SHADER.Id;
+
+	g_RenderState.renderResolution = {width, height};
 }
 
 void renderClearViewport(float color[4]) {
